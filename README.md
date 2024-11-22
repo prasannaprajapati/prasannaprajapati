@@ -1,6 +1,6 @@
 Protocol Features
--AMBA High-performance Bus (AHB) Features
--High-performance, high-bandwidth protocol
+*AMBA High-performance Bus (AHB) Features
+*High-performance, high-bandwidth protocol
 Pipelined operations support
 Multiple bus masters
 Burst transfers
