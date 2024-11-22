@@ -1,6 +1,5 @@
-# AHB to APB Bridge Project Documentation
-**Version 1.0 | November 22, 2024**
-
+# AHB to APB Bridge Project UVM Verification
+Single Master and Single Slave
 ## 📋 Table of Contents
 1. [Protocol Features](#1-protocol-features)
    * AHB Features
@@ -18,7 +17,7 @@
 
 ## 1. Protocol Features
 
-### 🚀 AMBA High-Performance Bus (AHB) Features
+### 🚀 Advanced High-Performance Bus (AHB) Features
 * High-performance, high-bandwidth protocol
 * Pipelined operations support
 * Multiple bus masters
@@ -52,12 +51,10 @@
 | Complexity | Complex | Simple |
 | Pipelining | Yes | No |
 | Burst Transfer | Supported | Not supported |
-| Clock Edge | Single edge | Single edge |
-| Bus Masters | Multiple | Single |
+| Logic Level | Logic Low(0),Logic High(1) |Logic Low(0),Logic High(1)  |
 | Transaction Stages | Single stage | Two stages (Setup + Enable) |
 | Target Devices | High-speed memories, DMA | Low-speed peripherals |
 | Power Consumption | Higher | Lower |
-| Address Bus | Up to 32-bit | Typically 32-bit |
 | Data Bus | 32/64/128-bit | Typically 32-bit |
 | Outstanding Transactions | Multiple | Single |
 | Wait States | Supported | Supported |
@@ -151,6 +148,32 @@ Boundary_addr = Starting_addr + ((2^hsize) * Length)
 * Boundary address: 24 + (2*4) = 32
 * Sequence: 24 → 26 → 28 → 30 → 24 (wraps)
 
+Comparing based on the Haddr, Paddr, and Hwdata, Pwdata
+The key operation happens under these conditions:
+1. Hwrite == 1: Indicates a write operation
+2. Hwrite == 0: Indicates a read operation
+3. Hsize == 2'b00: Specifies 1-byte data transfer (2^0 = 1 byte)
+            2'b01: 2 bytes (16 bits)
+            2'b10: 4 bytes (32 bits)
+            2'b11: 8 bytes (64 bits)
+   
+Example-
+Hwrite== 1
+Hsize== 2'b00 (1bytes)
+Haddr== 2e882088
+
+Haddr== 2e 88 20 88
+Byte position:    4      3      2      1
+according to hsize it will going to select haddr byte, and from 1 byte it will select the 8=1000
+last 2 bit data for data transfer, checking for last 2 bits
+it will check for Haddr and Paddr if yes ADDRESS are sucessfully matching otherwise ADDRESS Mismatching
+
+Hwdata=3e5f2294
+Byte position:    4      3      2      1
+Hex value:      3E     5F     22     94
+2-bit value:    11     10     01     00
+it will check for 94 value in Pdata if yes DATA are sucessfully matching otherwise DATA are NOT matching.
+
 ## 4. Verification Guidelines
 
 ### 🎯 Coverage Points
@@ -181,8 +204,5 @@ Boundary_addr = Starting_addr + ((2^hsize) * Length)
    * Latency
    * Bus utilization
 
----
-
-**End of Documentation**
 
 *For any updates or modifications, please contact the verification team.*
