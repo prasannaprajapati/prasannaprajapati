@@ -1,5 +1,5 @@
-# AHB to APB Bridge Project UVM Verification
-Single Master and Single Slave
+## AHB to APB Bridge Project UVM Verification
+* Single Master and Single Slave
 ## 📋 Table of Contents
 1. [Protocol Features](#1-protocol-features)
    * AHB Features
@@ -110,37 +110,52 @@ class master_seqs extends uvm_sequence #(master_xtn);
 * Base class for all AHB transfer sequences
 * Defines common transaction parameters
 * Supports UVM sequence infrastructure
+[Uploa# AHB Signal Description
 
-### 📡 Single Transfer Sequence
-**Implementation Features:**
-* Non-sequential transfers (HTRANS=2'b01)
-* Single transfer mode (HBURST=3'b000)
-* Write operations (HWRITE=1'b1)
-* Independent transfers without address incrementing
+| Hburst[2:0] | Type    | Description                                  |
+|-------------|---------|----------------------------------------------|
+| 000         | Single  | Single Transfer                              |
+| 001         | INCR    | Incrementing length of unspecified length    |
+| 010         | WRAP4   | 4-beat wrapping burst                        |
+| 011         | INCR4   | 4-beat Incrementing burst                    |
+| 100         | WRAP8   | 8-beat wrapping burst                        |
+| 101         | INCR8   | 8-beat Incrementing burst                    |
+| 110         | WRAP16  | 16-beat wrapping burst                       |
+| 111         | INCR16  | 16-beat incrementing burst                   |
 
-### 🔢 Increment Burst Sequence
-**Supported Burst Types:**
-* INCR4 (3'b011)
-* INCR8 (3'b101)
-* INCR16 (3'b111)
-* INCR (3'b001)
+## Description:
+The AHB burst signal (`HBURST[2:0]`) indicates the type of burst being performed. The burst may be:
+- Single transfer
+- Incrementing burst of unspecified length
+- Fixed-length wrapping bursts (4, 8, or 16 beats)
+- Fixed-length incrementing bursts (4, 8, or 16 beats)
 
-**Address Calculation:**
+### Burst Types
+1. **Single Transfer (000)**
+   - Performs a single data transfer
+
+2. **Incrementing Burst (001)**
+   - Length is not specified at the start of burst
+   - Address increments after each transfer
+* **Address Calculation:**
 ```
 New_Address = Previous_Address + (2^Size)
 ```
 
-### 🔄 Wrap Burst Sequence
-**Supported Burst Types:**
-* WRAP4 (3'b010)
-* WRAP8 (3'b100)
-* WRAP16 (3'b110)
+3. **Wrapping Burst (WRAP4/8/16)**
+   - Fixed length of 4, 8, or 16 beats
+   - Address wraps at boundary
+   - Used for cache line operations
 
-**Boundary Calculations:**
+* **Boundary Calculations:**
 ```
 Starting_addr = (haddr/((2^hsize) * Length)) * ((2^hsize) * Length)
 Boundary_addr = Starting_addr + ((2^hsize) * Length)
-```
+
+4. **Incrementing Burst (INCR4/8/16)**
+   - Fixed length of 4, 8, or 16 beats
+   - Address increments after each transfer
+   - Used for block transfersding ahb-signal-docs.md…]()
 
 **Example (WRAP4, 2-byte transfer):**
 * Initial address: 24
@@ -148,31 +163,49 @@ Boundary_addr = Starting_addr + ((2^hsize) * Length)
 * Boundary address: 24 + (2*4) = 32
 * Sequence: 24 → 26 → 28 → 30 → 24 (wraps)
 
-Comparing based on the Haddr, Paddr, and Hwdata, Pwdata
-The key operation happens under these conditions:
+**For EXAMPLE (Scoreboard comparing valid signals):**
+* Comparing based on the Haddr, Paddr, and Hwdata, Pwdata.
+* The key operation happens under these conditions:
 1. Hwrite == 1: Indicates a write operation
 2. Hwrite == 0: Indicates a read operation
 3. Hsize == 2'b00: Specifies 1-byte data transfer (2^0 = 1 byte)
-            2'b01: 2 bytes (16 bits)
-            2'b10: 4 bytes (32 bits)
-            2'b11: 8 bytes (64 bits)
+          *  2'b01: 2 bytes (16 bits)
+          *  2'b10: 4 bytes (32 bits)
+          *  2'b11: 8 bytes (64 bits)
    
-Example-
-Hwrite== 1
-Hsize== 2'b00 (1bytes)
-Haddr== 2e882088
+* Example-
+* Hwrite== 1
+* Hsize== 2'b00 (1bytes)
+* Haddr== 2e882088
 
-Haddr== 2e 88 20 88
-Byte position:    4      3      2      1
-according to hsize it will going to select haddr byte, and from 1 byte it will select the 8=1000
-last 2 bit data for data transfer, checking for last 2 bits
-it will check for Haddr and Paddr if yes ADDRESS are sucessfully matching otherwise ADDRESS Mismatching
+**Address Breakdown:**
 
-Hwdata=3e5f2294
-Byte position:    4      3      2      1
-Hex value:      3E     5F     22     94
-2-bit value:    11     10     01     00
-it will check for 94 value in Pdata if yes DATA are sucessfully matching otherwise DATA are NOT matching.
+* The address Haddr = 0x2E882088 is a 32-bit address.
+*It is broken down into 4 bytes:
+**Byte 4:** 0x2E, **Byte 3:** 0x88, **Byte 2:** 0x20, **Byte 1:** 0x88.
+
+* **Byte Selection Based on Hsize:**
+* Since Hsize == 2'b00 (indicating a 1-byte transaction), only the least significant byte (Byte 1) will be used for the data transfer.
+* The lower 2 bits of Haddr (i.e., Haddr[1:0]) are checked to determine which byte to select for transfer. In this case, Haddr[1:0] == 00, meaning Byte 1 (0x88) is selected for the data transfer.
+
+**Address Matching:**
+
+* The system compares the master's address (Haddr) with the slave's address (Paddr).
+* If they match, the address is successfully verified. If they don't match, an address mismatch occurs.
+
+**Data Verification:**
+
+* The data to be transferred is stored in Hwdata = 0x3E 0x5F 0x22 0x94, broken down into 4 bytes:
+
+* **Byte 4:** 0x3E, **Byte 3:** 0x5F, **Byte 2:** 0x22, **Byte 1:** 0x94.
+* The lower **2 bits** of each byte are examined for the transfer:
+* For Hwdata[7:0] (Byte 1), the value is 0x94. Its 2-bit value is 00, indicating the byte is being transferred.
+* The system then checks if the slave's data (Pdata) matches the byte being transferred.
+* If Pdata matches Hwdata[7:0] (0x94), the data is **successfully matched**. If they don't match, the data is considered a **mismatch**.
+
+**Summary:**
+* **Address Match:** Ensures the correct byte of memory is accessed based on the Haddr and Paddr.
+* **Data Match:** Verifies the transferred data (Hwdata) matches the expected data (Pdata).
 
 ## 4. Verification Guidelines
 
