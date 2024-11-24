@@ -92,7 +92,8 @@
    * Error responses
    * Reset during transfer
    * Different transfer sizes
-
+## TB Architecture
+![Image Alt Text](TB.png)
 ## 3. AHB Transfer Sequences
 
 ### 🔤 Base Sequence Class
