@@ -59,6 +59,8 @@
 | Outstanding Transactions | Multiple | Single |
 | Wait States | Supported | Supported |
 
+## AHB2APB Bridge Module
+![Image Alt Text](AHB2APB_bridge.jpg)
 ## 2. Implementation Details
 
 ### 🛠 Verification Components
