@@ -151,6 +151,7 @@ New_Address = Previous_Address + (2^Size)
 ```
 Starting_addr = (haddr/((2^hsize) * Length)) * ((2^hsize) * Length)
 Boundary_addr = Starting_addr + ((2^hsize) * Length)
+```
 
 4. **Incrementing Burst (INCR4/8/16)**
    - Fixed length of 4, 8, or 16 beats
